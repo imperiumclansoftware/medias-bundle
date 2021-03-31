@@ -1,0 +1,9 @@
+liip_imagine:
+  filter_sets:
+    mediaBundleThumbnail:
+      filters:
+          thumbnail: { size: [32,32], mode: outbound }
+
+    mediaBundleMini:
+      filters:
+          thumbnail: { size: [150,150], mode: outbound }
