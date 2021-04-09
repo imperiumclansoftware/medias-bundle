@@ -6,6 +6,9 @@ services:
   ICS\MediaBundle\Controller\:
     resource: "../src/Controller"
     tags: ['controller.service_arguments']
+  ICS\MediaBundle\Service\:
+    resource: "../src/Service"
+    tags: ['controller.service_arguments']
   ICS\MediaBundle\Command\:
     resource: "../src/Command"
     tags: ['controller.service_arguments']
@@ -16,4 +19,3 @@ services:
   ICS\MediaBundle\Form\:
     resource: "../src/Form"
     public: false
-    tags: ['controller.service_arguments']

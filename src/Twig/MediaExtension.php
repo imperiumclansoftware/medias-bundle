@@ -9,6 +9,7 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 use Twig\Environment;
 use Twig\Extension\AbstractExtension;
 use Twig\TwigFilter;
+use Twig\TwigFunction;
 
 /**
  * NavBarExtension.
@@ -43,7 +44,12 @@ class MediaExtension extends AbstractExtension
 
     public function getFunctions()
     {
-        return [];
+        return [
+            new TwigFunction('mediaGraphData', [$this, 'MediaGraphData'], [
+                'is_safe' => ['html'],
+                'needs_environment' => true,
+            ]),
+        ];
     }
 
     public function MediaType(Environment $env, MediaFile $file)
@@ -53,5 +59,53 @@ class MediaExtension extends AbstractExtension
         }
 
         return 'file';
+    }
+
+
+    public function mediaGraphData(Environment $env)
+    {
+        $fileRepo = $this->doctrine->getRepository(MediaFile::class);
+        $imageRepo = $this->doctrine->getRepository(MediaImage::class);
+
+        $files=count($fileRepo->findAll());
+        $images=count($imageRepo->findAll());
+
+        $filesQuery=$fileRepo->createQueryBuilder('f')
+        ->select("sum(f.filesize)")
+        ->getQuery();
+        $filesSize=$filesQuery->getSingleScalarResult();
+
+        $ImagesQuery=$imageRepo->createQueryBuilder('i')
+        ->select("sum(i.filesize)")
+        ->getQuery();
+        $ImagesSize=$ImagesQuery->getSingleScalarResult();
+
+        $data[]=[
+            'name'=> 'files',
+            'y' => ($files - $images)
+        ];
+        $data[]=[
+            'name' => 'images',
+            'y' => $images
+        ];
+
+        $sdata=[];
+        dump($filesSize);
+        dump($ImagesSize);
+        $sdata[]=[
+            'name'=> 'files',
+            'y' => ($filesSize - $ImagesSize)
+        ];
+        $sdata[]=[
+            'name' => 'images',
+            'y' => $ImagesSize
+        ];
+
+
+
+        return $env->render('@Media/admin/dashboard.html.twig', [
+            'data' => $data,
+            'sdata' => $sdata
+        ]);
     }
 }

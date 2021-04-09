@@ -5,6 +5,7 @@ namespace ICS\MediaBundle\Controller\Admin;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Crud;
 use EasyCorp\Bundle\EasyAdminBundle\Controller\AbstractCrudController;
 use EasyCorp\Bundle\EasyAdminBundle\Field\IdField;
+use EasyCorp\Bundle\EasyAdminBundle\Field\NumberField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\TextField;
 use ICS\MediaBundle\Entity\MediaFile;
 
@@ -27,6 +28,7 @@ class MediaFileCrudController extends AbstractCrudController
             //IdField::new('id'),
             TextField::new('path'),
             TextField::new('hash'),
+            NumberField::new('filesize'),
         ];
     }
 }

@@ -103,24 +103,20 @@ class MediaFile {
      *
      * @var string
      */
-    protected $mediaICSrectory;
+    protected $mediaDefaultDirectory;
 
     protected $container;
 
-    public function __construct(ContainerInterface $container=null)
+    public function __construct(ContainerInterface $container)
     {
-        if($container!=null)
-        {
             $this->container=$container;
-            $this->mediaICSrectory = $container->getParameter('medias')['path'];
-            $this->basePath = $container->get('kernel')->getProjectDir().'/public/'.$this->mediaICSrectory;
-            
+            $this->mediaDefaultDirectory = $container->getParameter('medias')['path'];
+            $this->basePath = $container->get('kernel')->getProjectDir().'/public/'.$this->mediaDefaultDirectory;
+
             if(!file_exists($this->basePath))
             {
                 mkdir($this->basePath,0775,true);
             }
-        }
-
     }
 
 
@@ -144,19 +140,19 @@ class MediaFile {
                     $movedDirectory = '/'.$movedDirectory;
                 }
 
-                if(!file_exists($this->basePath.$movedDirectory))
-                {
-                    mkdir($this->basePath.$movedDirectory,0775,true);
-                }
-
                 $newPath=$this->basePath.$movedDirectory;
+            }
+
+            if(!file_exists($newPath))
+            {
+                mkdir($newPath,0775,true);
             }
 
             if(file_exists($filepath))
             {
                 $this->setName(basename($filepath));
                 $this->setPath($newPath.'/'.$this->getName());
-                
+
                 if(rename($filepath,$this->getPath()))
                 {
                     $modifDate = new DateTime();
@@ -167,7 +163,7 @@ class MediaFile {
                     if($withHash)
                     {
                         $this->setHash($this->makeHash());
-                    } 
+                    }
                     return true;
                 }
 
@@ -189,7 +185,7 @@ class MediaFile {
      * remove file on doctrine remove
      *
      * @ORM\PostRemove
-     * 
+     *
      * @return void
      */
     public function removeFromFileSystem()
@@ -212,7 +208,7 @@ class MediaFile {
 
     /**
      * Get the value of path
-     */ 
+     */
     public function getPath($full=false)
     {
         if($full)
@@ -220,14 +216,14 @@ class MediaFile {
             return $this->path;
         }
 
-        return $this->mediaICSrectory.str_replace($this->basePath,'',$this->path);
+        return $this->mediaDefaultDirectory.str_replace($this->basePath,'',$this->path);
     }
 
     /**
      * Set the value of path
      *
      * @return  self
-     */ 
+     */
     public function setPath($path)
     {
         $this->path = $path;
@@ -237,7 +233,7 @@ class MediaFile {
 
     /**
      * Get the value of filename
-     */ 
+     */
     public function getName()
     {
         return $this->name;
@@ -247,7 +243,7 @@ class MediaFile {
      * Set the value of filename
      *
      * @return  self
-     */ 
+     */
     public function setName($filename)
     {
         $this->name = $filename;
@@ -257,7 +253,7 @@ class MediaFile {
 
     /**
      * Get the value of mimeType
-     */ 
+     */
     public function getMimeType()
     {
         return $this->mimeType;
@@ -267,7 +263,7 @@ class MediaFile {
      * Set the value of mimeType
      *
      * @return  self
-     */ 
+     */
     public function setMimeType($mimeType)
     {
         $this->mimeType = $mimeType;
@@ -277,7 +273,7 @@ class MediaFile {
 
     /**
      * Get the value of creationDate
-     */ 
+     */
     public function getCreationDate()
     {
         return $this->creationDate;
@@ -287,7 +283,7 @@ class MediaFile {
      * Set the value of creationDate
      *
      * @return  self
-     */ 
+     */
     public function setCreationDate($creationDate)
     {
         $this->creationDate = $creationDate;
@@ -297,7 +293,7 @@ class MediaFile {
 
     /**
      * Get the value of modificationDate
-     */ 
+     */
     public function getModificationDate()
     {
         return $this->modificationDate;
@@ -307,7 +303,7 @@ class MediaFile {
      * Set the value of modificationDate
      *
      * @return  self
-     */ 
+     */
     public function setModificationDate($modificationDate)
     {
         $this->modificationDate = $modificationDate;
@@ -317,7 +313,7 @@ class MediaFile {
 
     /**
      * Get the value of hash
-     */ 
+     */
     public function getHash()
     {
         return $this->hash;
@@ -327,7 +323,7 @@ class MediaFile {
      * Set the value of hash
      *
      * @return  self
-     */ 
+     */
     public function setHash($hash)
     {
         $this->hash = $hash;
@@ -337,7 +333,7 @@ class MediaFile {
 
     /**
      * Get the value of id
-     */ 
+     */
     public function getId()
     {
         return $this->id;
@@ -347,7 +343,7 @@ class MediaFile {
      * Set the value of id
      *
      * @return  self
-     */ 
+     */
     public function setId($id)
     {
         $this->id = $id;
@@ -359,7 +355,7 @@ class MediaFile {
      * Get filesize
      *
      * @return  bigint
-     */ 
+     */
     public function getFilesize($human=false)
     {
         if($human)
@@ -377,7 +373,7 @@ class MediaFile {
      * @param  bigint  $filesize  filesize
      *
      * @return  self
-     */ 
+     */
     public function setFilesize(int $filesize)
     {
         $this->filesize = $filesize;
@@ -396,5 +392,27 @@ class MediaFile {
         }
 
         return number_format($fz,2).' '.MediaFile::FILESIZE_HUMAN_SIZE[$i];
+    }
+
+    /**
+     * Get medias basepath
+     *
+     * @return  string
+     */
+    public function getBasePath()
+    {
+        return $this->basePath;
+    }
+
+    /**
+     * Set the value of container
+     *
+     * @return  self
+     */
+    public function setContainer(ContainerInterface $container)
+    {
+        $this->container = $container;
+
+        return $this;
     }
 }
