@@ -1,1 +1,10 @@
 ROLE_MEDIAS_ADMIN: Medias - Administrateur de médias
+MediaFile: Fichier
+Path: Chemin
+Name: Nom
+Mime Type: Type Mime
+Hash: Hash
+Filesize: Taille du Fichier
+File management: Gestion des fichiers
+Pictures management: Gestion des images
+

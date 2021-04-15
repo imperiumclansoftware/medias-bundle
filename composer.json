@@ -2,7 +2,7 @@
     "name": "ics/medias-bundle",
     "description": "File Manager for symfony",
     "type": "symfony-bundle",
-    "version": "0.0.1",
+    "version": "0.0.2",
     "license": "MIT",
     "autoload": {
         "psr-4": {

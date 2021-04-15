@@ -13,16 +13,20 @@ use Doctrine\ORM\Mapping as ORM;
 use Exception;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpFoundation\File\Exception\FileException;
+use ICS\SsiBundle\Annotation\Log;
+use PhpParser\Node\Expr\Cast\Double;
 
 /**
  * File Management Entity
+ *
+ * @Log(actions={"all"},property="logMessage")
  *
  * @ORM\Table(name="media_file", schema="medias")
  * @ORM\Entity
  * @ORM\MappedSuperclass
  * @ORM\InheritanceType("JOINED")
  * @ORM\DiscriminatorColumn(name="discr", type="string")
- * @ORM\HasLifecycleCallbacks()(
+ * @ORM\HasLifecycleCallbacks()
  *
  * @package MediaBundle
  */
@@ -107,8 +111,10 @@ class MediaFile {
 
     protected $container;
 
-    public function __construct(ContainerInterface $container)
+    public function __construct(ContainerInterface $container=null)
     {
+        if($container!=null)
+        {
             $this->container=$container;
             $this->mediaDefaultDirectory = $container->getParameter('medias')['path'];
             $this->basePath = $container->get('kernel')->getProjectDir().'/public/'.$this->mediaDefaultDirectory;
@@ -117,6 +123,7 @@ class MediaFile {
             {
                 mkdir($this->basePath,0775,true);
             }
+        }
     }
 
 
@@ -381,9 +388,9 @@ class MediaFile {
         return $this;
     }
 
-    public static function HumanizeSize($size)
+    public static function HumanizeSize($size): ?string
     {
-        $fz=$size;
+        $fz=floatval($size);
         $i=0;
         while($fz > 1024)
         {
@@ -393,6 +400,7 @@ class MediaFile {
 
         return number_format($fz,2).' '.MediaFile::FILESIZE_HUMAN_SIZE[$i];
     }
+
 
     /**
      * Get medias basepath
@@ -414,5 +422,15 @@ class MediaFile {
         $this->container = $container;
 
         return $this;
+    }
+
+    public function getLogMessage()
+    {
+        return $this->getPath().' (#'.$this->getId().')';
+    }
+
+    public function __toString()
+    {
+        return $this->getPath();
     }
 }

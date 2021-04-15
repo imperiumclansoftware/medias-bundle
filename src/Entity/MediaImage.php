@@ -9,15 +9,14 @@
 namespace ICS\MediaBundle\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
-use Doctrine\Common\Collections\ArrayCollection;
-use Doctrine\DBAL\Types\BigIntType;
 use Exception;
-use phpDocumentor\Reflection\Types\Integer;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use Symfony\Component\HttpFoundation\File\Exception\FileException;
+use ICS\SsiBundle\Annotation\Log;
 
 /**
  * File Management Entity
+ *
+ * @Log(actions={"all"},property="logMessage")
  *
  * @ORM\Table(name="media_image", schema="medias")
  * @ORM\Entity
