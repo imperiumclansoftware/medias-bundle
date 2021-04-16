@@ -90,8 +90,6 @@ class MediaExtension extends AbstractExtension
         ];
 
         $sdata=[];
-        dump($filesSize);
-        dump($ImagesSize);
         $sdata[]=[
             'name'=> 'files',
             'y' => ($filesSize - $ImagesSize)
