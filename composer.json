@@ -2,7 +2,7 @@
     "name": "ics/medias-bundle",
     "description": "File Manager for symfony",
     "type": "symfony-bundle",
-    "version": "0.0.3",
+    "version": "0.0.4",
     "license": "MIT",
     "autoload": {
         "psr-4": {
@@ -15,7 +15,8 @@
         "symfony/orm-pack": "^2.1",
         "symfony/twig-bundle": "^5.2",
         "easycorp/easyadmin-bundle": "^3.2",
-        "symfony/dependency-injection": "^5.2"
+        "symfony/dependency-injection": "^5.2",
+        "api-platform/core": "^2.6"
     },
     "suggest": {
         "liip/imagine-bundle": "Add liip-imagine pre-configured filters",

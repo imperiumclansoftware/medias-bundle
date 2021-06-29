@@ -8,13 +8,16 @@
 
 namespace ICS\MediaBundle\Entity;
 
-use Doctrine\ORM\Mapping as ORM;
-use Exception;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use ICS\SsiBundle\Annotation\Log;
+use Exception;
+use Doctrine\ORM\Mapping as ORM;
+use ApiPlatform\Core\Annotation\ApiResource;
 
 /**
  * File Management Entity
+ *
+ * @ApiResource
  *
  * @Log(actions={"all"},property="logMessage")
  *

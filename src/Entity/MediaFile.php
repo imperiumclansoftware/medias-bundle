@@ -8,17 +8,19 @@
 
 namespace ICS\MediaBundle\Entity;
 
-use DateTime;
-use Doctrine\ORM\Mapping as ORM;
-use Exception;
-use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpFoundation\File\Exception\FileException;
-use ICS\SsiBundle\Annotation\Log;
+use Symfony\Component\DependencyInjection\ContainerInterface;
 use PhpParser\Node\Expr\Cast\Double;
+use ICS\SsiBundle\Annotation\Log;
+use Exception;
+use Doctrine\ORM\Mapping as ORM;
+use DateTime;
+use ApiPlatform\Core\Annotation\ApiResource;
 
 /**
  * File Management Entity
  *
+ * @ApiResource
  * @Log(actions={"all"},property="logMessage")
  *
  * @ORM\Table(name="media_file", schema="medias")
@@ -274,26 +276,6 @@ class MediaFile {
     public function setMimeType($mimeType)
     {
         $this->mimeType = $mimeType;
-
-        return $this;
-    }
-
-    /**
-     * Get the value of creationDate
-     */
-    public function getCreationDate()
-    {
-        return $this->creationDate;
-    }
-
-    /**
-     * Set the value of creationDate
-     *
-     * @return  self
-     */
-    public function setCreationDate($creationDate)
-    {
-        $this->creationDate = $creationDate;
 
         return $this;
     }
