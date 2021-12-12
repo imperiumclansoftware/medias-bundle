@@ -42,6 +42,10 @@ class MediaExtension extends Extension implements PrependExtensionInterface
             $loader->load('framework_extra.yaml');
         }
 
+        if (isset($bundles['DoctrineBundle'])) {
+            $loader->load('doctrine.yaml');
+        }
+
         $loader->load('api_platform.yaml');
     }
 }

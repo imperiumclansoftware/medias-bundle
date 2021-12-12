@@ -120,7 +120,7 @@ class MediaFile {
             $this->container=$container;
             $this->mediaDefaultDirectory = $container->getParameter('medias')['path'];
             $this->basePath = $container->get('kernel')->getProjectDir().'/public/'.$this->mediaDefaultDirectory;
-
+            
             if(!file_exists($this->basePath))
             {
                 mkdir($this->basePath,0775,true);

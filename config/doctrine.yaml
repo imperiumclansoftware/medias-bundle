@@ -1,0 +1,9 @@
+doctrine:
+    orm:
+        mappings:
+            MediaBundle:
+                is_bundle: true
+                type: annotation
+                dir: 'src/Entity'
+                prefix: 'ICS\MediaBundle\Entity'
+                alias: Media

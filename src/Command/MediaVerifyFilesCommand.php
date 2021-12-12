@@ -2,13 +2,13 @@
 
 namespace ICS\MediaBundle\Command;
 
-use Doctrine\Common\Persistence\ManagerRegistry;
-use ICS\MediaBundle\Entity\MediaFile;
-use Symfony\Component\Console\Command\Command;
-use Symfony\Component\Console\Input\InputInterface;
-use Symfony\Component\Console\Output\OutputInterface;
-use Symfony\Component\Console\Style\SymfonyStyle;
 use Symfony\Component\DependencyInjection\ContainerInterface;
+use Symfony\Component\Console\Style\SymfonyStyle;
+use Symfony\Component\Console\Output\OutputInterface;
+use Symfony\Component\Console\Input\InputInterface;
+use Symfony\Component\Console\Command\Command;
+use ICS\MediaBundle\Entity\MediaFile;
+use Doctrine\ORM\EntityManagerInterface;
 
 class MediaVerifyFilesCommand extends Command
 {
@@ -17,7 +17,7 @@ class MediaVerifyFilesCommand extends Command
     private $doctrine;
     private $container;
 
-    public function __construct(ManagerRegistry $doctrine, ContainerInterface $container)
+    public function __construct(EntityManagerInterface $doctrine, ContainerInterface $container)
     {
         parent::__construct();
 
