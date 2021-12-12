@@ -2,7 +2,7 @@
     "name": "ics/medias-bundle",
     "description": "File Manager for symfony",
     "type": "symfony-bundle",
-    "version": "0.0.4",
+    "version": "0.0.5",
     "license": "MIT",
     "autoload": {
         "psr-4": {
@@ -10,12 +10,12 @@
         }
     },
     "require": {
-        "symfony/framework-bundle": "^5.2",
-        "symfony/console": "^5.2",
-        "symfony/orm-pack": "^2.1",
-        "symfony/twig-bundle": "^5.2",
-        "easycorp/easyadmin-bundle": "^3.2",
-        "symfony/dependency-injection": "^5.2",
+        "symfony/framework-bundle": "^5",
+        "symfony/console": "^5",
+        "symfony/orm-pack": "^2",
+        "symfony/twig-bundle": "^5",
+        "easycorp/easyadmin-bundle": "^3",
+        "symfony/dependency-injection": "^5",
         "api-platform/core": "^2.6"
     },
     "suggest": {
