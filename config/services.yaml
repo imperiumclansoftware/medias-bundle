@@ -19,3 +19,13 @@ services:
   ICS\MediaBundle\Form\:
     resource: "../src/Form"
     public: false
+  
+  # Service de gestion des enregistrement et chargement de fichier
+  ICS\MediaBundle\EntityListener\MediaFileEntityListener:
+    tags:
+      - { name: 'doctrine.orm.entity_listener', event : 'prePersist', entity : 'ICS\MediaBundle\Entity\MediaFile'}
+      - { name: 'doctrine.orm.entity_listener', event : 'preRemove', entity : 'ICS\MediaBundle\Entity\MediaFile'}
+  ICS\MediaBundle\EntityListener\MediaImageEntityListener:
+    tags:
+      - { name: 'doctrine.orm.entity_listener', event : 'postLoad', entity : 'ICS\MediaBundle\Entity\MediaImage'}
+      - { name: 'doctrine.orm.entity_listener', event : 'prePersist', entity : 'ICS\MediaBundle\Entity\MediaImage'}

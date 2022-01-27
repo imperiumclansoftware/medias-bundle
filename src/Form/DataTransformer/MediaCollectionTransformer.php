@@ -4,48 +4,56 @@ namespace ICS\MediaBundle\Form\DataTransformer;
 
 use Symfony\Component\Form\DataTransformerInterface;
 use ICS\MediaBundle\Service\MediaService;;
+use ICS\MediaBundle\MediaBundle;
 use ICS\MediaBundle\Entity\MediaFile;
+use Doctrine\ORM\EntityManagerInterface;
+use Doctrine\Common\Collections\Collection;
+use Doctrine\Common\Collections\ArrayCollection;
 
-class MediaTransformer implements DataTransformerInterface
+class MediaCollectionTransformer implements DataTransformerInterface
 {
-
+    /**
+     * Undocumented variable
+     *
+     * @var MediaService
+     */
     private $service;
     private $outputdir='';
     private $oldValue=null;
     private $required;
+    private $em;
 
-    public function __construct(MediaService $service)
+    public function __construct(MediaService $service,EntityManagerInterface $em)
     {
         $this->service = $service;
+        $this->em=$em;
     }
 
-    public function transform($media): ?MediaFile
+    public function transform($media): ?Collection
     {
-        if($media==null && $this->required == false && $this->oldValue!=null)
-        {
-            return $this->oldValue;
-        }
-
         return $media;
-        
     }
 
-    public function reverseTransform($filepath): ?MediaFile
+    public function reverseTransform($files): ?Collection
     {
-        if($filepath != null)
+        $collection = $this->oldValue;
+        foreach($files as $file)
         {
-            $type = $this->service->getMediaType($filepath->getPathname());
+            $media=$this->em->getRepository(MediaFile::class)->findOneBy(['path' => $file]);
+
+            if($media==null)
+            {
+                $type = $this->service->getMediaType($file);
+                $media = new $type($file,$this->outputdir);
+            }
             
-            $media = new $type($filepath->getPathname(),$this->outputdir);
-            $media->setFileName($filepath->getClientOriginalName());
-            return $media;
-        }
-        elseif($this->oldValue != null && $this->required == false)
-        {
-            return $this->oldValue;
+            if(!$collection->contains($media))
+            {
+                $collection->add($media);
+            }
         }
 
-        return null;
+        return $collection;
     }
 
 

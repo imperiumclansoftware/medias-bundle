@@ -1,328 +1,265 @@
 <?php
 
-/**
- * Source code of Entity MediaFile
- *
- * @author David Dutas <david.dutas@ia.defensecdd.gouv.fr>
- */
-
 namespace ICS\MediaBundle\Entity;
 
-use Symfony\Component\HttpFoundation\File\Exception\FileException;
-use Symfony\Component\DependencyInjection\ContainerInterface;
-use PhpParser\Node\Expr\Cast\Double;
-use ICS\SsiBundle\Annotation\Log;
-use Exception;
+use Symfony\Component\HttpKernel\KernelInterface;
+use Symfony\Component\HttpFoundation\File\UploadedFile;
+use ReflectionClass;
+use ICS\MediaBundle\Repository\MediaFileRepository;
 use Doctrine\ORM\Mapping as ORM;
+use Doctrine\ORM\Event\LifecycleEventArgs;
 use DateTime;
-use ApiPlatform\Core\Annotation\ApiResource;
 
 /**
- * File Management Entity
- *
- * @ApiResource
- * @Log(actions={"all"},property="logMessage")
- *
- * @ORM\Table(name="media_file", schema="medias")
- * @ORM\Entity
- * @ORM\MappedSuperclass
+ * @ORM\Entity(repositoryClass=MediaFileRepository::class)
+ * @ORM\Table(schema="medias")
  * @ORM\InheritanceType("JOINED")
  * @ORM\DiscriminatorColumn(name="discr", type="string")
  * @ORM\HasLifecycleCallbacks()
- *
- * @package MediaBundle
  */
-class MediaFile {
-
-    protected const FILESIZE_HUMAN_SIZE = array('b','Kb','Mb','Gb','Tb','Pb');
+class MediaFile
+{
+    public static $mimes = [];
 
     /**
-     * MediaFile Identifier
-     *
-     * @ORM\Column(type="integer", nullable=false)
-     * @ORM\Id
+     * @ORM\Id()
      * @ORM\GeneratedValue()
-     *
-     * @var integer
+     * @ORM\Column(type="integer")
      */
     private $id;
     /**
-     * MediaFile AbsolutePath
-     *
-     * @ORM\Column(type="string" , length=2048, nullable=false)
-     *
-     * @var string
+     * @ORM\Column(type="string",nullable=false)
      */
-    protected $path;
+    private $basePath;
     /**
-     * MediaFile
-     *
-     * @ORM\Column(type="string" , length=255, nullable=false)
-     *
-     * @var string
+     * @ORM\Column(type="string",nullable=false)
      */
-    protected $name;
+    private $path;
     /**
-     * MediaFile MimeType
-     *
-     * @ORM\Column(type="string" , length=255, nullable=false)
-     *
-     * @var string
+     * @ORM\Column(type="string",nullable=false)
      */
-    protected $mimeType;
+    private $fileName;
     /**
-     * MediaFile modification Date
-     *
-     * @ORM\Column(type="datetime" , nullable=false)
-     *
-     * @var DateTime
+     * @ORM\Column(type="string",nullable=false)
      */
-    protected $modificationDate;
+    private $mime;
     /**
-     * Hash of file for integrity or duplicity
-     *
-     * @ORM\Column(type="string" , length=100, nullable=false)
-     *
-     * @var string
+     * @ORM\Column(type="string",nullable=true)
      */
-    protected $hash;
+    private $hash;
     /**
-     * filesize
-     *
-     * @ORM\Column(type="float" , nullable=false)
-     *
-     * @var int
+     * @ORM\Column(type="datetime",nullable=false)
      */
-    protected $filesize;
+    private $creationDate;
     /**
-     * Medias basepath
-     *
-     * @ORM\Column(type="string" , length=2048, nullable=false)
-     *
-     * @var string
+     * @ORM\Column(type="datetime",nullable=false)
      */
-    protected $basePath;
-    /**
-     * Medias default directory under public
-     *
-     * @ORM\Column(type="string" , length=255, nullable=false)
-     *
-     * @var string
-     */
-    protected $mediaDefaultDirectory;
+    private $modificationDate;
 
-    protected $container;
+    private $updateDate;
+    /**
+     * @ORM\Column(type="integer",nullable=false)
+     */
+    private $size;
+    /**
+     * @ORM\Column(type="string",nullable=false)
+     */
+    private $publicDir;
 
-    public function __construct(ContainerInterface $container=null)
+    // Date for object traitement
+    private $config;
+    /**
+     * @ORM\Column(type="string",nullable=true)
+     */
+    private $filestatus = '';
+    /**
+     * @ORM\Column(type="text",nullable=true)
+     */
+    private $statusMessage = '';
+
+    private $absoluteDir;
+
+    private $filepath;
+
+    private $newpath;
+
+    public function __construct(string $filepath='',string $newpath='')
     {
-        if($container!=null)
+        $this->filepath = $filepath;
+        $this->newpath = $newpath;
+        if($filepath!='')
         {
-            $this->container=$container;
-            $this->mediaDefaultDirectory = $container->getParameter('medias')['path'];
-            $this->basePath = $container->get('kernel')->getProjectDir().'/public/'.$this->mediaDefaultDirectory;
-            
-            if(!file_exists($this->basePath))
-            {
-                mkdir($this->basePath,0775,true);
-            }
+            $this->fileName=\basename($filepath);
         }
     }
 
-
-    /**
-     * Load File into entity
-     *
-     * @param string $filepath absolute path to the file
-     * @param boolean $withHash does entity compute file hash ?
-     * @return boolean true if successfull loading, false in other case
-     */
-    public function Load(string $filepath, $movedDirectory=null, $withHash=true) : bool
+    public function load(string $filepath,string $newPath): void
     {
-        try
+        // File Moved in medias architecture
+        $this->createDir($this->absoluteDir.'/'.$newPath);
+
+        if($newPath[\strlen($newPath)-1] =='/')
         {
-            $newPath = $this->basePath."/files";
+            $this->path = $this->basePath.'/'.$newPath.$this->fileName;
+        }
+        else
+        {
+            $this->path = $this->basePath.'/'.$newPath.'/'.$this->fileName;
+        }
+        
+        $counter=1;
+        $firstFilename=basename($this->publicDir.'/'.$this->path);
+        while(\file_exists($this->publicDir.'/'.$this->path))
+        {
+            $infos = \pathinfo($this->publicDir.'/'.$this->path);
+            $extension = '.'.$infos['extension'];
 
-            if($movedDirectory!=null)
+            $this->fileName = \str_replace($extension,'',$firstFilename).'_'.$counter.$extension;
+
+            if($newPath[\strlen($newPath)-1] =='/')
             {
-                if($movedDirectory[0]!='/')
-                {
-                    $movedDirectory = '/'.$movedDirectory;
-                }
-
-                $newPath=$this->basePath.$movedDirectory;
-            }
-
-            if(!file_exists($newPath))
-            {
-                mkdir($newPath,0775,true);
-            }
-
-            if(file_exists($filepath))
-            {
-                $this->setName(basename($filepath));
-                $this->setPath($newPath.'/'.$this->getName());
-
-                if(rename($filepath,$this->getPath()))
-                {
-                    $modifDate = new DateTime();
-                    $modifDate->setTimestamp(filemtime($this->getPath()));
-                    $this->setMimeType(mime_content_type($this->getPath()));
-                    $this->setModificationDate($modifDate);
-                    $this->setFilesize(filesize($this->getPath()));
-                    if($withHash)
-                    {
-                        $this->setHash($this->makeHash());
-                    }
-                    return true;
-                }
-
+                $this->path = $this->basePath.'/'.$newPath.$this->fileName;
             }
             else
             {
-                throw new Exception('This File does not exist !');
+                $this->path = $this->basePath.'/'.$newPath.'/'.$this->fileName;
             }
-        }
-        catch(FileException $ex)
-        {
-            throw $ex;
+
+            $counter++;
         }
 
-        return false;
+        \rename($filepath,$this->publicDir.'/'.$this->path);
+
+        $this->filepath=$this->publicDir.'/'.$this->path;
+
+        //File compute
+        $this->compute();
     }
 
-    /**
-     * remove file on doctrine remove
-     *
-     * @ORM\PostRemove
-     *
-     * @return void
-     */
-    public function removeFromFileSystem()
+    protected function compute($withHash=true)
     {
-        if(file_exists($this->getPath(true)))
+        $this->updateData($withHash);
+    }
+
+    public function updateData($withHash=false)
+    {
+        $this->creationDate = DateTime::createFromFormat("d/m/Y H:i:s.m",date('d/m/Y H:i:s.m',\filectime($this->getPath(true))));
+        $this->modificationDate = DateTime::createFromFormat("d/m/Y H:i:s.m",date('d/m/Y H:i:s.m',\filemtime($this->getPath(true))));
+        $this->size = \filesize($this->getPath(true));
+        $this->mime = \mime_content_type($this->getPath(true));
+        if($withHash)
         {
-            unlink($this->getPath(true));
+            $this->hash = \md5_file($this->getPath(true));
         }
     }
 
-    /**
-     * Compute file Hash
-     *
-     * @return string file hash computed
-     */
-    protected function makeHash():string
+    public function createDir(string $dir)
     {
-        return md5_file($this->getPath());
+        if(!\file_exists($dir))
+        {
+            mkdir($dir,0775,true);
+        }
     }
 
-    /**
-     * Get the value of path
-     */
-    public function getPath($full=false)
+    public function getPath(bool $full=false)
     {
         if($full)
         {
+            return $this->publicDir.'/'.$this->path;
+        }
+        else
+        {
             return $this->path;
         }
-
-        return $this->mediaDefaultDirectory.str_replace($this->basePath,'',$this->path);
     }
 
-    /**
-     * Set the value of path
-     *
-     * @return  self
-     */
-    public function setPath($path)
+    public function getSize($human=false)
     {
-        $this->path = $path;
-
-        return $this;
+        if($human)
+        {
+            return MediaFile::getHumanSize($this->size);
+        }
+        else
+        {
+            return $this->size;
+        }
     }
 
-    /**
-     * Get the value of filename
-     */
-    public function getName()
+    public static function getHumanSize($size)
     {
-        return $this->name;
+        $unit[]='o';
+        $unit[]='ko';
+        $unit[]='Mo';
+        $unit[]='Go';
+        $unit[]='Po';
+
+        $i=0;
+
+        while($size > 1024)
+        {
+            $size=$size/1024;
+            $i++;
+        }
+
+        return \number_format($size,2).' '.$unit[$i];
     }
 
-    /**
-     * Set the value of filename
-     *
-     * @return  self
-     */
-    public function setName($filename)
-    {
-        $this->name = $filename;
-
-        return $this;
-    }
 
     /**
-     * Get the value of mimeType
-     */
-    public function getMimeType()
+     * Get the value of mime
+     */ 
+    public function getMime()
     {
-        return $this->mimeType;
-    }
-
-    /**
-     * Set the value of mimeType
-     *
-     * @return  self
-     */
-    public function setMimeType($mimeType)
-    {
-        $this->mimeType = $mimeType;
-
-        return $this;
-    }
-
-    /**
-     * Get the value of modificationDate
-     */
-    public function getModificationDate()
-    {
-        return $this->modificationDate;
-    }
-
-    /**
-     * Set the value of modificationDate
-     *
-     * @return  self
-     */
-    public function setModificationDate($modificationDate)
-    {
-        $this->modificationDate = $modificationDate;
-
-        return $this;
+        return $this->mime;
     }
 
     /**
      * Get the value of hash
-     */
+     */ 
     public function getHash()
     {
         return $this->hash;
     }
 
     /**
-     * Set the value of hash
+     * Get the value of creationDate
+     */ 
+    public function getCreationDate()
+    {
+        return $this->creationDate;
+    }
+
+    /**
+     * Get the value of modificationDate
+     */ 
+    public function getModificationDate()
+    {
+        return $this->modificationDate;
+    }
+
+    /**
+     * Get the value of updateDate
+     */ 
+    public function getUpdateDate()
+    {
+        return $this->updateDate;
+    }
+
+    /**
+     * Set the value of updateDate
      *
      * @return  self
-     */
-    public function setHash($hash)
+     */ 
+    public function setUpdateDate($updateDate)
     {
-        $this->hash = $hash;
+        $this->updateDate = $updateDate;
 
         return $this;
     }
 
     /**
      * Get the value of id
-     */
+     */ 
     public function getId()
     {
         return $this->id;
@@ -332,7 +269,7 @@ class MediaFile {
      * Set the value of id
      *
      * @return  self
-     */
+     */ 
     public function setId($id)
     {
         $this->id = $id;
@@ -341,78 +278,171 @@ class MediaFile {
     }
 
     /**
-     * Get filesize
-     *
-     * @return  bigint
-     */
-    public function getFilesize($human=false)
+     * Get the value of config
+     */ 
+    public function getConfig()
     {
-        if($human)
-        {
-            return MediaFile::HumanizeSize($this->filesize);
-        }
-
-
-        return $this->filesize;
+        return $this->config;
     }
 
     /**
-     * Set filesize
-     *
-     * @param  bigint  $filesize  filesize
+     * Set the value of basePath
      *
      * @return  self
-     */
-    public function setFilesize(int $filesize)
+     */ 
+    public function setBasePath($basePath)
     {
-        $this->filesize = $filesize;
+        $this->basePath = $basePath;
+        $this->absoluteDir = $this->publicDir.'/'.$this->basePath;
+        return $this;
+    }
+
+    /**
+     * Set the value of publicDir
+     *
+     * @return  self
+     */ 
+    public function setPublicDir($publicDir)
+    {
+        $this->publicDir = $publicDir;
+        $this->absoluteDir = $this->publicDir.'/'.$this->basePath;
+        return $this;
+    }
+
+    /**
+     * Get the value of absoluteDir
+     */ 
+    public function getAbsoluteDir()
+    {
+        return $this->absoluteDir;
+    }
+
+    /**
+     * Get the value of filepath
+     */ 
+    public function getFilepath()
+    {
+        return $this->filepath;
+    }
+
+    /**
+     * Set the value of filepath
+     *
+     * @return  self
+     */ 
+    public function setFilepath($filepath)
+    {
+        $this->filepath = $filepath;
 
         return $this;
     }
 
-    public static function HumanizeSize($size): ?string
-    {
-        $fz=floatval($size);
-        $i=0;
-        while($fz > 1024)
-        {
-            $fz=$fz/1024;
-            $i++;
-        }
-
-        return number_format($fz,2).' '.MediaFile::FILESIZE_HUMAN_SIZE[$i];
-    }
-
-
     /**
-     * Get medias basepath
-     *
-     * @return  string
-     */
-    public function getBasePath()
+     * Get the value of newpath
+     */ 
+    public function getNewpath()
     {
-        return $this->basePath;
+        return $this->newpath;
     }
 
     /**
-     * Set the value of container
+     * Set the value of newpath
      *
      * @return  self
-     */
-    public function setContainer(ContainerInterface $container)
+     */ 
+    public function setNewpath($newpath)
     {
-        $this->container = $container;
+        $this->newpath = $newpath;
 
         return $this;
     }
 
-    public function getLogMessage()
+    /**
+     * Set the value of fileName
+     *
+     * @return  self
+     */ 
+    public function setFileName($fileName)
     {
-        return $this->getPath().' (#'.$this->getId().')';
+        $this->fileName = $fileName;
+
+        return $this;
+    }
+
+    /**
+     * Set the value of path
+     *
+     * @return  self
+     */ 
+    public function setPath($path)
+    {
+        $this->path = $path;
+
+        return $this;
+    }
+
+    /**
+     * Get the value of filestatus
+     */ 
+    public function getFilestatus()
+    {
+        return $this->filestatus;
+    }
+
+    /**
+     * Set the value of filestatus
+     *
+     * @return  self
+     */ 
+    public function setFilestatus($filestatus)
+    {
+        $this->filestatus = $filestatus;
+
+        return $this;
+    }
+
+    /**
+     * Get the value of statusMessage
+     */ 
+    public function getStatusMessage()
+    {
+        return $this->statusMessage;
+    }
+
+    /**
+     * Set the value of statusMessage
+     *
+     * @return  self
+     */ 
+    public function setStatusMessage($statusMessage)
+    {
+        $this->statusMessage = $statusMessage;
+
+        return $this;
+    }
+
+    /**
+     * Get the value of fileName
+     */ 
+    public function getFileName()
+    {
+        return $this->fileName;
+    }
+
+    public function getClassName()
+    {
+        return (new ReflectionClass($this))->getShortName();
     }
 
     public function __toString()
     {
-        return $this->getPath();
+        if($this->getPath() != null)
+        {
+            return $this->getPath();
+        }
+        else
+        {
+            return "Nouveau Fichier";
+        }
     }
 }

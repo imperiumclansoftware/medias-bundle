@@ -47,5 +47,6 @@ class MediaExtension extends Extension implements PrependExtensionInterface
         }
 
         $loader->load('api_platform.yaml');
+        $loader->load('twig.yaml');
     }
 }

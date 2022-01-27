@@ -2,14 +2,14 @@
 
 namespace ICS\MediaBundle\Twig;
 
-use Doctrine\ORM\EntityManagerInterface;
-use ICS\MediaBundle\Entity\MediaFile;
-use ICS\MediaBundle\Entity\MediaImage;
-use Symfony\Component\DependencyInjection\ContainerInterface;
-use Twig\Environment;
-use Twig\Extension\AbstractExtension;
-use Twig\TwigFilter;
 use Twig\TwigFunction;
+use Twig\TwigFilter;
+use Twig\Extension\AbstractExtension;
+use Twig\Environment;
+use Symfony\Component\DependencyInjection\ContainerInterface;
+use ICS\MediaBundle\Entity\MediaImage;
+use ICS\MediaBundle\Entity\MediaFile;
+use Doctrine\ORM\EntityManagerInterface;
 
 /**
  * NavBarExtension.
@@ -71,12 +71,12 @@ class MediaExtension extends AbstractExtension
         $images=count($imageRepo->findAll());
 
         $filesQuery=$fileRepo->createQueryBuilder('f')
-        ->select("sum(f.filesize)")
+        ->select("sum(f.size)")
         ->getQuery();
         $filesSize=$filesQuery->getSingleScalarResult();
 
         $ImagesQuery=$imageRepo->createQueryBuilder('i')
-        ->select("sum(i.filesize)")
+        ->select("sum(i.size)")
         ->getQuery();
         $ImagesSize=$ImagesQuery->getSingleScalarResult();
 

@@ -60,6 +60,138 @@ For update database :
 php bin/console doctrine:schema:update -f
 
 ```
+
+## Configuration
+
+### Routing
+
+```yaml
+
+#config/routes.yaml
+
+#...
+
+media_bundle:
+  resource: '@MediaBundle/config/routes.yaml'
+  prefix: /media
+
+#...
+
+```
+
+### Medias configuration
+
+You can configure relative path from the public directory. The medias files will be stored in this directory 
+
+```yaml
+# config/packages/medias.yaml
+
+medias:
+    path: 'medias' # Default Value
+
+```
+
+## Usage
+
+The Mediabundle propose two FormType `MediaType` that return One MediaFile and `MediaCollectionType` that retun Many MediaFile. You may precise the outputdir relative to medias path in the config.
+
+### Entity
+
+```php
+
+use ICS\MediaBundle\Entity\MediaImage;
+
+// Exemple entity
+
+public class User
+{
+    /**
+     * Avatar of user
+     *
+     * @var MediaImage
+     * @ORM\ManyToOne(targetEntity=MediaImage::class, cascade={"persist","remove"})
+     */
+    private $avatar;
+
+    /**
+     * Gallery of user
+     *
+     * @var ArrayCollection
+     * @ORM\ManyToMany(targetEntity=MediaImage::class, cascade={"persist","remove"})
+     */
+    private $gallery;
+
+    public function __construct()
+    {
+        $gallery=new ArrayCollection();
+    }
+}
+
+```
+### FormType
+
+```php
+    //...
+    public function buildForm(FormBuilderInterface $builder, array $options): void
+    {
+        // For One file
+        $builder->add('avatar',MediaType::class,[
+            'outputdir' => 'user/avatar'
+        ]);
+        // For Many files
+        $builder->add('gallery',MediaCollectionType::class,[
+            'outputdir' => 'user/gallery'
+        ]);
+    }
+    //...
+```
+You can impose limitation of type for all and size for `MediaCollectionType`
+
+```php
+    //...
+    public function buildForm(FormBuilderInterface $builder, array $options): void
+    {
+        // For One file
+        $builder->add('avatar',MediaType::class,[
+            'outputdir' => 'user/avatar',
+            'required' => false,
+            'acceptedFiles' => 'image/jpeg, .png'
+        ]);
+        // For Many files
+        $builder->add('gallery',MediaCollectionType::class,[
+            'outputdir' => 'user/gallery'
+            'required' => false,
+            'acceptedFiles' => MediaImage::$mimes
+            'maxFileSize' => '1024' // 1Ko
+        ]);
+    }
+    //...
+```
+
+The maxFileSize is calculated based on system capabilities and your configuration. If your configuration is higher of system capabilities, system capabilities is used.
+
+## Commands
+
+Two commands are implemented
+
+### Integrity verification
+
+```bash
+
+php bin/console media:file:verify
+
+```
+
+### Duplicate search
+
+```bash
+
+php bin/console media:search:duplicate
+
+```
+
+## Integration
+
 ### Adding bundle to [EasyAdmin](https://symfony.com/doc/current/bundles/EasyAdminBundle/index.html)
 
 #### Step 1: Add entities to dashboard
@@ -94,19 +226,4 @@ Add this MenuItems in your dashboard `Controller/Admin/DashboardController.php`
         {{ mediaGraphData() }}
 
     {% endblock %}
-```
-
-## MediaBundle in form
-
-the Mediabundle has only one type of form, `MediaType`, the files are automatically classified by the bundle thanks to the `Mime Type`.
-
-```php
-    //...
-    public function buildForm(FormBuilderInterface $builder, array $options): void
-    {
-        $builder->add('file',MediaType::class);
-        //...
-        $builder->add('image',MediaType::class);
-    }
-    //...
 ```

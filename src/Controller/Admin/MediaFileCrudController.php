@@ -2,17 +2,17 @@
 
 namespace ICS\MediaBundle\Controller\Admin;
 
-use EasyCorp\Bundle\EasyAdminBundle\Config\Action;
-use EasyCorp\Bundle\EasyAdminBundle\Config\Actions;
-use EasyCorp\Bundle\EasyAdminBundle\Config\Crud;
-use EasyCorp\Bundle\EasyAdminBundle\Controller\AbstractCrudController;
-use EasyCorp\Bundle\EasyAdminBundle\Field\ArrayField;
-use EasyCorp\Bundle\EasyAdminBundle\Field\IdField;
-use EasyCorp\Bundle\EasyAdminBundle\Field\NumberField;
-use EasyCorp\Bundle\EasyAdminBundle\Field\TextField;
-use EasyCorp\Bundle\EasyAdminBundle\Field\UrlField;
-use ICS\MediaBundle\Entity\MediaFile;
 use ICS\MediaBundle\Form\Type\MediaType;
+use ICS\MediaBundle\Entity\MediaFile;
+use EasyCorp\Bundle\EasyAdminBundle\Field\UrlField;
+use EasyCorp\Bundle\EasyAdminBundle\Field\TextField;
+use EasyCorp\Bundle\EasyAdminBundle\Field\NumberField;
+use EasyCorp\Bundle\EasyAdminBundle\Field\IdField;
+use EasyCorp\Bundle\EasyAdminBundle\Field\ArrayField;
+use EasyCorp\Bundle\EasyAdminBundle\Controller\AbstractCrudController;
+use EasyCorp\Bundle\EasyAdminBundle\Config\Crud;
+use EasyCorp\Bundle\EasyAdminBundle\Config\Actions;
+use EasyCorp\Bundle\EasyAdminBundle\Config\Action;
 
 class MediaFileCrudController extends AbstractCrudController
 {
@@ -30,12 +30,25 @@ class MediaFileCrudController extends AbstractCrudController
     public function configureFields(string $pageName): iterable
     {
         return [
+            TextField::new('filestatus')
+            ->formatValue(function($value){
+                switch($value)
+                {
+                    case 'ok': return '<i class="fa fa-check text-success" title="File is Ok"></i>';
+                    case 'warning': return '<i class="fa fa-exclamation-triangle text-warning" title="File was modified externaly"></i>';
+                    case 'error': return '<i class="fa fa-exclamation-circle text-danger" title="File does not exist"></i>';
+                    case null: return '<i class="fa fa-exclamation text-info" title="No verified"></i>';
+                    default: return '<i class="fa fa-exclamation text-info" title="No verified"></i>';
+                }
+            })
+            ,
             UrlField::new('path'),
-            TextField::new('name'),
-            TextField::new('mimeType'),
+            TextField::new('filename'),
+            TextField::new('mime'),
             TextField::new('hash'),
-            NumberField::new('filesize')->formatValue(function($value){
-                return MediaFile::HumanizeSize(str_replace(',','',$value));
+            NumberField::new('size')
+            ->formatValue(function($value){
+                return MediaFile::getHumanSize(str_replace(' ','',$value));
             })
         ];
     }

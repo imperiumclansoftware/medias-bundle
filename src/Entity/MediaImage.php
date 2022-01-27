@@ -1,73 +1,49 @@
 <?php
+    namespace ICS\MediaBundle\Entity;
 
-/**
- * Source code of Entity MediaFile
- *
- * @author David Dutas <david.dutas@ia.defensecdd.gouv.fr>
- */
-
-namespace ICS\MediaBundle\Entity;
-
-use Symfony\Component\DependencyInjection\ContainerInterface;
-use ICS\SsiBundle\Annotation\Log;
-use Exception;
+use Symfony\Component\HttpKernel\KernelInterface;
+use Liip\ImagineBundle\Imagine\Cache\CacheManager;
+use ICS\MediaBundle\Entity\MediaFile;
 use Doctrine\ORM\Mapping as ORM;
-use ApiPlatform\Core\Annotation\ApiResource;
+use Doctrine\ORM\Event\LifecycleEventArgs;
 
 /**
- * File Management Entity
- *
- * @ApiResource
- *
- * @Log(actions={"all"},property="logMessage")
- *
- * @ORM\Table(name="media_image", schema="medias")
- * @ORM\Entity
- * @ORM\MappedSuperclass
- *
- * @package MediaBundle
+ * @ORM\Entity()
+ * @ORM\Table(schema="medias")
+ * @ORM\HasLifecycleCallbacks()
  */
 class MediaImage extends MediaFile
 {
 
+    public static $mimes = ['image/jpg', 'image/jpeg', 'image/png', 'image/gif'];
+    // public static $mimes = ['image/jpeg', 'image/png', 'image/gif'];
+
     /**
-     * Width of image in pixels
-     *
-     * @ORM\Column(type="integer", nullable=false)
-     *
-     * @var int
+     * @ORM\Column(type="integer",nullable=false)
      */
-    protected $width;
+    private $width;
     /**
-     * Height of image in pixels
-     *
-     * @ORM\Column(type="integer", nullable=false)
-     *
-     * @var int
+     * @ORM\Column(type="integer",nullable=false)
      */
-    protected $height;
+    private $height;
 
-    public function __construct(ContainerInterface $container = null)
+    private $exifData=null;
+
+    private $thumbnails;
+
+    protected function compute($withHash=true)
     {
-        parent::__construct($container);
-    }
+        parent::compute($withHash);
 
+        $size=\getimagesize($this->getPath(true));
 
-    public function Load(string $filepath, $movedDirectory = null, $withHash = true): bool
-    {
-        $result = parent::Load($filepath, $movedDirectory, $withHash);
+        $this->width = $size[0];
+        $this->height = $size[1];
 
-        try {
-            $size = getimagesize($this->getPath(true));
-
-            $this->width = $size[0];
-            $this->height = $size[1];
-            $result = $result && true;
-        } catch (Exception $ex) {
-            $result = $result && false;
+        if($this->getMime()=='image/jpeg')
+        {
+            $this->exifData = \exif_read_data($this->getPath(true));
         }
-
-        return $result;
     }
 
     /**
@@ -79,18 +55,6 @@ class MediaImage extends MediaFile
     }
 
     /**
-     * Set the value of width
-     *
-     * @return  self
-     */
-    public function setWidth($width)
-    {
-        $this->width = $width;
-
-        return $this;
-    }
-
-    /**
      * Get the value of height
      */
     public function getHeight()
@@ -99,19 +63,39 @@ class MediaImage extends MediaFile
     }
 
     /**
-     * Set the value of height
+     * Get the value of exifData
+     */
+    public function getExifData()
+    {
+        return $this->exifData;
+    }
+
+    public function generateCachePaths(CacheManager $imagineCacheManager,$filters)
+    {
+        foreach($filters as $key => $filter)
+        {
+            $this->thumbnails[$key] = $imagineCacheManager->getBrowserPath($this->getPath(),$key);
+        }
+    }
+
+    /**
+     * Get the value of thumbnails
+     */
+    public function getThumbnails()
+    {
+        return $this->thumbnails;
+    }
+
+    /**
+     * Set the value of thumbnails
      *
      * @return  self
      */
-    public function setHeight($height)
+    public function setThumbnails($thumbnails)
     {
-        $this->height = $height;
+        $this->thumbnails = $thumbnails;
 
         return $this;
     }
 
-    public function getSize(): string
-    {
-        return $this->width . "x" . $this->height;
-    }
 }

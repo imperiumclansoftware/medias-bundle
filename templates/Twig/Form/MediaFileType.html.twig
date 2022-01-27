@@ -1,0 +1,81 @@
+{% block media_row %}
+	{% set acc = '' %}
+		{% for accept in acceptedFiles %}
+			{% if not loop.first %}
+				{% set acc %}{{ acc }},{% endset %}
+			{% endif %}
+			{% set acc %}{{ acc ~ accept }}{% endset %}
+		{% endfor %}
+	{% if multiple %}
+
+		<script src="{{ asset('bundles/media/js/dropzone-5.9.3/dist/min/dropzone.min.js') }}"></script>
+		<link rel="stylesheet" href="{{ asset('bundles/media/js/dropzone-5.9.3/dist/min/dropzone.min.css') }}" type="text/css"/>
+		<link rel="stylesheet" href="{{ asset('bundles/media/js/dropzone-5.9.3/dist/min/basic.min.css') }}" type="text/css"/>
+
+		<div class="card mb-3 w100">
+			<div class="row g-0">
+				<div class="col-12 col">
+					<div class="card-body">
+						<h5 class="card-title">
+							{% if label %}
+								{{ form_label(form) }}
+							{% else %}
+								{{ name|capitalize }}
+							{% endif %}
+						</h5>
+						<div id="errors-{{ id }}">
+							{% if errors %}
+								{% for error in errors %}
+									<span class="text-danger">{{ error }}</span>
+								{% endfor %}
+							{% endif %}
+						</div>
+						<div id="dropzone-{{ id }}" class="h100 border dropzone media-dropzone" style="min-height: 300px;"></div>
+						<div class="float-end text-muted">
+							{{ nbElements }} elements found.</div>
+						<div>
+							{{ form_widget(form) }}
+							<div class="mb-3">
+							{{ form_help(form) }}
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+			<script>
+				var nbfiles = 0;
+
+				const mediadropzone_{{id}} = new Dropzone( "#dropzone-{{ id }}", {
+				url: "{{ path("ics-medias-upload-multiple") }}",
+				acceptedFiles: "{{ acc }}",
+				maxFilesize: {{ (maxFileSize/1024/1024) }},
+				success: file => {
+					obj = JSON.parse( file.xhr.response );
+					$( '#{{ id }}' ).append( '<input type="hidden" id="{{ id }}_' + nbfiles + '" name="  {{ full_name }}[' + nbfiles + ']" value="' + obj.path + '"/>' );
+					nbfiles++;
+				}
+				});
+			</script>
+		{% else %}
+			<div class="card mb-3 w100">
+				<div class="row g-0">
+					<div class="col-12 col-md-2">
+						{% if data.thumbnails is defined %}
+							<img class="img-fluid rounded-start" src="{{ asset(data.thumbnails["mediaBundleMini"]) }}"/>
+						{% endif %}
+					</div>
+					<div class="col-12 col-md-10">
+						<div class="card-body">
+							<h5 class="card-title">{{ form_label(form) }}</h5>
+							<div class="form-group">
+								{{ form_errors(form) }}
+								
+								{{ form_widget(form, {'attr': {'accept':acc}}) }}
+								{{ form_help(form) }}
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		{% endif %}
+	{% endblock %}

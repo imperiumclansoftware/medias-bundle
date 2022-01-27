@@ -2,38 +2,59 @@
 
 namespace ICS\MediaBundle\Service;
 
+use Symfony\Component\HttpKernel\KernelInterface;
 use ICS\MediaBundle\Entity\MediaFile;
-use ICS\MediaBundle\Entity\MediaImage;
-use Symfony\Component\DependencyInjection\ContainerInterface;
+use Doctrine\ORM\EntityManagerInterface;
 
 class MediaService
 {
-    private $container;
 
-    public function __construct(ContainerInterface $container)
+    private $doctrine;
+
+    public function __construct(EntityManagerInterface $doctrine)
     {
-        $this->container = $container;
+        $this->doctrine = $doctrine;
     }
 
-    public function add($path)
+    public function getMediaType($filepath)
     {
-        $type = mime_content_type($path);
+        if (\file_exists($filepath)) {
+            $mime = mime_content_type($filepath);
 
-        switch($type)
-        {
-            case 'image/png':
-            case 'image/jpeg':
-            case 'image/gif':
-            case 'image/svg':
-            case 'image/jpg':
-                $media=new MediaImage($this->container);
-                $media->load($path,'pictures');
-                break;
-            default:
-                $media=new MediaFile($this->container);
-                $media->load($path);
+            foreach ($this->doctrine->getConfiguration()->getMetadataDriverImpl()->getAllClassNames() as $cl) {
+                if (get_parent_class($cl) == MediaFile::class && \in_array($mime, $cl::$mimes)) {
+                    return $cl;
+                }
+            }
+
+            return MediaFile::class;
         }
 
-        return $media;
+        return null;
+    }
+
+    public function getMaxUploadSize()
+    {
+        $max_size = -1;
+        $post_overhead = 1024; // POST data contains more than just the file upload; see comment from @jlh
+        $files = array_merge(array(php_ini_loaded_file()), explode(",\n", php_ini_scanned_files()));
+        foreach (array_filter($files) as $file) {
+            $ini = parse_ini_file($file);
+            $regex = '/^([0-9]+)([bkmgtpezy])$/i';
+            if (!empty($ini['post_max_size']) && preg_match($regex, $ini['post_max_size'], $match)) {
+                $post_max_size = round($match[1] * pow(1024, stripos('bkmgtpezy', strtolower($match[2]))));
+                if ($post_max_size > 0) {
+                    $max_size = $post_max_size - $post_overhead;
+                }
+            }
+            if (!empty($ini['upload_max_filesize']) && preg_match($regex, $ini['upload_max_filesize'], $match)) {
+                $upload_max_filesize = round($match[1] * pow(1024, stripos('bkmgtpezy', strtolower($match[2]))));
+                if ($upload_max_filesize > 0 && ($max_size <= 0 || $max_size > $upload_max_filesize)) {
+                    $max_size = $upload_max_filesize;
+                }
+            }
+        }
+
+        return $max_size;
     }
 }
