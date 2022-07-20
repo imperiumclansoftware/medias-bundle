@@ -86,7 +86,7 @@ You can configure relative path from the public directory. The medias files will
 ```yaml
 # config/packages/medias.yaml
 
-medias:
+media:
     path: 'medias' # Default Value
 
 ```
@@ -155,7 +155,9 @@ You can impose limitation of type for all and size for `MediaCollectionType`
         $builder->add('avatar',MediaType::class,[
             'outputdir' => 'user/avatar',
             'required' => false,
-            'acceptedFiles' => 'image/jpeg, .png'
+            'acceptedFiles' => [
+                'image/jpeg' => '.jpg'
+            ],
         ]);
         // For Many files
         $builder->add('gallery',MediaCollectionType::class,[
