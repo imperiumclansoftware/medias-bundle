@@ -73,7 +73,7 @@ php bin/console doctrine:schema:update -f
 
 media_bundle:
   resource: '@MediaBundle/config/routes.yaml'
-  prefix: /media
+  prefix: /medias
 
 #...
 
@@ -86,7 +86,7 @@ You can configure relative path from the public directory. The medias files will
 ```yaml
 # config/packages/medias.yaml
 
-media:
+medias:
     path: 'medias' # Default Value
 
 ```
