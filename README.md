@@ -155,9 +155,7 @@ You can impose limitation of type for all and size for `MediaCollectionType`
         $builder->add('avatar',MediaType::class,[
             'outputdir' => 'user/avatar',
             'required' => false,
-            'acceptedFiles' => [
-                'image/jpeg' => '.jpg'
-            ],
+            'acceptedFiles' => ['image/jpeg','.jpg'],
         ]);
         // For Many files
         $builder->add('gallery',MediaCollectionType::class,[
