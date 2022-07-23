@@ -123,7 +123,7 @@ public class User
 
     public function __construct()
     {
-        $gallery=new ArrayCollection();
+        $this->gallery=new ArrayCollection();
     }
 }
 
