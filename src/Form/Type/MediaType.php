@@ -82,7 +82,7 @@ class MediaType extends AbstractType
     {
             $resolver->setDefaults([
                 'data_class' => MediaFile::class,
-                'outputdir' => '',
+                'outputdir' => 'upload',
                 'acceptedFiles' => [],
                 'maxFileSize' => $this->service->getMaxUploadSize(),
             ]);

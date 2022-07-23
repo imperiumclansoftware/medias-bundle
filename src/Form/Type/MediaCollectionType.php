@@ -93,7 +93,7 @@ class MediaCollectionType extends AbstractType
     {
         $resolver->setDefaults([
             'data_class' => Collection::class,
-            'outputdir' => '',
+            'outputdir' => 'upload',
             'prototype' => true,
             "entry_type" => HiddenType::class,
             'allow_add' => true,
