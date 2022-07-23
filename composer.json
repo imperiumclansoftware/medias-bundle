@@ -2,7 +2,7 @@
     "name": "ics/medias-bundle",
     "description": "File Manager for symfony",
     "type": "symfony-bundle",
-    "version": "0.0.6",
+    "version": "0.0.7",
     "license": "MIT",
     "autoload": {
         "psr-4": {
@@ -22,7 +22,8 @@
         "symfony/routing": "^5",
         "doctrine/orm": "^2.8",
         "symfony/form": "^5",
-        "symfony/http-foundation": "^5.4"
+        "symfony/http-foundation": "^5.4",
+        "ics/tools-bundle": "^0.0.5"
     },
     "suggest": {
         "liip/imagine-bundle": "Add liip-imagine pre-configured filters",
