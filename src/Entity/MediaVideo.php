@@ -14,15 +14,15 @@ class MediaVideo extends MediaFile
     public static $mimes = ['video/mp4', 'video/avi', 'video/mpeg', 'video/mkv'];
 
     /**
-     * @ORM\Column(type="integer",nullable=false)
+     * @ORM\Column(type="integer",nullable=true)
      */
     private $width;
     /**
-     * @ORM\Column(type="integer",nullable=false)
+     * @ORM\Column(type="integer",nullable=true)
      */
     private $height;
     /**
-     * @ORM\Column(type="integer",nullable=false)
+     * @ORM\Column(type="integer",nullable=true)
      */
     private $duration;
 
